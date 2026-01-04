@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { eq, like, or, and, sql, desc } from "drizzle-orm";
 import { db } from "../db";
-import { guests } from "../db/schema";
+import { guests, guestRegistrationLogs } from "../db/schema";
 import {
   createGuestSchema,
   updateGuestSchema,
@@ -114,33 +114,50 @@ const guestsRoute = new Hono()
   .post("/", zValidator("json", createGuestSchema), async (c) => {
     const data = c.req.valid("json");
 
-    // Get next registration number
-    const lastGuest = await db
-      .select({ regNumber: guests.regNumber })
-      .from(guests)
-      .orderBy(desc(guests.id))
-      .limit(1);
+    try {
+      // Get next registration number
+      const lastGuest = await db
+        .select({ regNumber: guests.regNumber })
+        .from(guests)
+        .orderBy(desc(guests.id))
+        .limit(1);
 
-    const latestGuest = lastGuest[0];
-    const nextRegNumber = latestGuest
-      ? (parseInt(latestGuest.regNumber) + 1).toString()
-      : "1";
+      const latestGuest = lastGuest[0];
+      const nextRegNumber = latestGuest
+        ? (parseInt(latestGuest.regNumber) + 1).toString()
+        : "1";
 
-    const newGuest = await db
-      .insert(guests)
-      .values({
-        ...data,
-        regNumber: nextRegNumber,
-      })
-      .returning();
+      const newGuest = await db
+        .insert(guests)
+        .values({
+          ...data,
+          regNumber: nextRegNumber,
+        })
+        .returning();
 
-    const g = newGuest[0];
+      const g = newGuest[0];
 
-    if (!g) {
+      if (!g) {
+        return c.json<ApiResponse>({ success: false, error: "Failed to create guest" }, 500);
+      }
+
+      // Create guest registration log
+      const guestName = `${g.firstName} ${g.lastName}`;
+      await db.insert(guestRegistrationLogs).values({
+        guestId: g.id,
+        guestName: guestName,
+        regNumber: g.regNumber,
+        ipAddress: c.req.header("x-real-ip") || c.req.header("x-forwarded-for") || null,
+        userAgent: c.req.header("user-agent") || null,
+        action: "REGISTRATION",
+        details: `Guest registered with ID: ${g.id}`,
+      });
+
+      return c.json<ApiResponse<Guest>>({ success: true, data: transformGuest(g) }, 201);
+    } catch (error) {
+      console.error("Create guest error:", error);
       return c.json<ApiResponse>({ success: false, error: "Failed to create guest" }, 500);
     }
-
-    return c.json<ApiResponse<Guest>>({ success: true, data: transformGuest(g) }, 201);
   })
 
   // Update guest
@@ -188,25 +205,44 @@ const guestsRoute = new Hono()
   .patch("/:id/check-in", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
 
-    const existing = await db.select().from(guests).where(eq(guests.id, id)).limit(1);
+    try {
+      const existing = await db.select().from(guests).where(eq(guests.id, id)).limit(1);
 
-    if (!existing.length) {
-      return c.json<ApiResponse>({ success: false, error: "Guest not found" }, 404);
-    }
+      if (!existing.length) {
+        return c.json<ApiResponse>({ success: false, error: "Guest not found" }, 404);
+      }
 
-    const updated = await db
-      .update(guests)
-      .set({ checkedIn: !existing[0]!.checkedIn })
-      .where(eq(guests.id, id))
-      .returning();
+      const wasCheckedIn = existing[0]!.checkedIn;
+      const updated = await db
+        .update(guests)
+        .set({ checkedIn: !wasCheckedIn })
+        .where(eq(guests.id, id))
+        .returning();
 
-    const g = updated[0];
+      const g = updated[0];
 
-    if (!g) {
+      if (!g) {
+        return c.json<ApiResponse>({ success: false, error: "Failed to toggle check-in" }, 500);
+      }
+
+      // Create guest registration log for check-in/check-out
+      const guestName = `${g.firstName} ${g.lastName}`;
+      const action = g.checkedIn ? "CHECK_IN" : "CHECK_OUT";
+      await db.insert(guestRegistrationLogs).values({
+        guestId: g.id,
+        guestName: guestName,
+        regNumber: g.regNumber,
+        ipAddress: c.req.header("x-real-ip") || c.req.header("x-forwarded-for") || null,
+        userAgent: c.req.header("user-agent") || null,
+        action: action,
+        details: `Guest ${action === "CHECK_IN" ? "checked in" : "checked out"}`,
+      });
+
+      return c.json<ApiResponse<Guest>>({ success: true, data: transformGuest(g) });
+    } catch (error) {
+      console.error("Toggle check-in error:", error);
       return c.json<ApiResponse>({ success: false, error: "Failed to toggle check-in" }, 500);
     }
-
-    return c.json<ApiResponse<Guest>>({ success: true, data: transformGuest(g) });
   });
 
 export default guestsRoute;
