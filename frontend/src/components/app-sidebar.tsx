@@ -93,7 +93,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
       <SidebarHeader className="border-b border-sidebar-border px-6 py-4">
         <Link to="/admin" className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <img src="../../public/chorcher.png" alt="Chorcher Logo" className="h-10 w-10" />
+            <img src="/chorcher.png" alt="Chorcher Logo" className="h-10 w-10" />
           </div>
           <div className="flex flex-col">
             <span className="text-lg font-bold tracking-tight">Chorcher Admin</span>
