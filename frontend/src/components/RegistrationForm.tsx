@@ -157,7 +157,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         <CardHeader className="text-center bg-[url('/bg-1.webp')] bg-cover bg-center bg-no-repeat rounded-t-xl p-4">
           <div className="flex items-center justify-center mb-2">
             <div className="w-24 h-24 flex items-center justify-center">
-              <img src="../../public/chorcher.png" alt="Chorcher Logo" className="h-20 w-20" />
+              <img src="/chorcher.png" alt="Chorcher Logo" className="h-20 w-20" />
             </div>
           </div>
           <CardTitle className="text-3xl">Lay Over Registration</CardTitle>
