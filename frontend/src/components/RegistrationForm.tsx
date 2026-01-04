@@ -147,7 +147,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#e9dcc7] to-[#e4d7c3]  flex flex-col items-center justify-center md:p-4">
       <Card className="w-full max-w-2xl shadow-xl sm:p-4 md:p-4 ">
-        <CardHeader className="text-center border-b bg-[url('/bg-1.webp')] bg-cover bg-center bg-no-repeat rounded-t-xl p-4">
+        <CardHeader className="text-center bg-[url('/bg-1.webp')] bg-cover bg-center bg-no-repeat rounded-t-xl p-4">
           <div className="flex items-center justify-center mb-2">
             <div className="w-24 h-24 flex items-center justify-center">
               <img src="../../public/chorcher.png" alt="Chorcher Logo" className="h-20 w-20" />
@@ -156,6 +156,12 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           <CardTitle className="text-3xl">Check-in Registration</CardTitle>
           <p className="text-amber-950 mt-2">Welcome to ChorCher Hotel</p>
         </CardHeader>
+        {/* Decorative Outline */}
+        <div id="chorcher-outlinesd-des" className="flex items-center justify-center">
+          <div className="w-[7px] h-[7px] bg-[#C08329] rotate-45"></div>
+          <div className="w-full h-[2px] bg-[#C08329]"></div>
+          <div className="w-[7px] h-[7px] bg-[#C08329] rotate-45"></div>
+        </div>
 
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -310,9 +316,15 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         regNumber={successRegNumber}
       />
       <Card className="w-full max-w-2xl shadow-xl sm:p-4 md:p-4 mt-6">
-        <CardHeader className="text-center border-b text-white rounded-t-xl p-4">
-          <CardTitle className="text-2xl text-black">How to Register</CardTitle>
+        <CardHeader className="text-center text-black rounded-t-xl p-4">
+          <CardTitle className="text-2xl">How to Register</CardTitle>
         </CardHeader>
+        {/* Decorative Outline */}
+        <div id="chorcher-outlinesd-des" className="flex items-center justify-center">
+          <div className="w-[7px] h-[7px] bg-[#C08329] rotate-45"></div>
+          <div className="w-full h-[2px] bg-[#C08329]"></div>
+          <div className="w-[7px] h-[7px] bg-[#C08329] rotate-45"></div>
+        </div>
       </Card>
       <footer>
         <div className="text-center text-sm text-gray-500 mt-4">
