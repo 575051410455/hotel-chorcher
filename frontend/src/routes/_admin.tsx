@@ -1,6 +1,7 @@
 // src/routes/_admin.tsx
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { userQueryOptions } from "@/lib/api";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const Route = createFileRoute("/_admin")({
   beforeLoad: async ({ context }) => {
@@ -24,5 +25,9 @@ export const Route = createFileRoute("/_admin")({
 });
 
 function AuthenticatedLayout() {
-  return <Outlet />;
+  return (
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <Outlet />
+      </ThemeProvider>
+  );
 }

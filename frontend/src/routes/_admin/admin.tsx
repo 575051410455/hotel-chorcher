@@ -281,7 +281,7 @@ export function AdminDashboard() {
                               <div className="flex justify-end gap-1">
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(guest)}><Eye className="w-4 h-4" /></Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(guest)}><Edit className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-red-600" onClick={() => handleDelete(guest)}><Trash2 className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-600" onClick={() => handleDelete(guest)}><Trash2 className="w-4 h-4" /></Button>
                               </div>
                             </TableCell>
                           </TableRow>

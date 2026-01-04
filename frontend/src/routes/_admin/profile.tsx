@@ -311,7 +311,7 @@ function ProfilePage() {
             {/* Password Tab */}
             <TabsContent value="password" className="space-y-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="pt-5">
                   <CardTitle>เปลี่ยนรหัสผ่าน</CardTitle>
                   <CardDescription>
                     เปลี่ยนรหัสผ่านเพื่อรักษาความปลอดภัยของบัญชี
