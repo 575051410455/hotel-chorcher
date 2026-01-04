@@ -27,7 +27,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const createGuest = useCreateGuest();
   const uploadImage = useUploadImage();
 
-  // ✅ Success dialog state
+  // Success dialog state
   const [showSuccess, setShowSuccess] = useState(false);
   const [successRegNumber, setSuccessRegNumber] = useState<string>("");
 
@@ -39,23 +39,30 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-      if (!allowedTypes.includes(file.type)) {
-        alert("กรุณาอัพโหลดไฟล์รูปภาพ (JPEG, PNG, GIF, WEBP) เท่านั้น");
+      // Validate file type - Support HEIC/HEIF from iPhone
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif"];
+      const fileExtension = file.name.toLowerCase().split('.').pop();
+      const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp", "heic", "heif"];
+
+      // Check both MIME type and file extension
+      const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension || "");
+
+      if (!isValidType) {
+        alert("Please upload an image file (JPEG, PNG, GIF, WEBP, HEIC) only");
         return;
       }
+
       // Validate file size (max 10MB)
       const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
-        alert("ไฟล์ใหญ่เกินไป ขนาดสูงสุดคือ 10MB");
+        alert("File too large. Maximum size is 10MB");
         return;
       }
 
-      // เก็บไฟล์ไว้สำหรับ upload
+      // Store file for upload
       setImageFile(file);
 
-      // สร้าง preview
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -74,7 +81,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     e.preventDefault();
 
     if (!formData.firstName || !formData.lastName) {
-      alert("กรุณากรอกชื่อและนามสกุลแขกท่านแรก");
+      alert("Please enter first name and last name for the primary guest");
       return;
     }
 
@@ -92,7 +99,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           console.log("Image uploaded successfully:", imageUrl);
         } catch (uploadError) {
           console.error("Image upload failed:", uploadError);
-          alert("ไม่สามารถอัพโหลดรูปภาพได้ กรุณาลองใหม่");
+          alert("Failed to upload image. Please try again");
           return;
         }
       }
@@ -110,7 +117,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
       console.log("Guest created:", result);
 
-      // ✅ แสดง Success Dialog พร้อม regNumber
+      // Show Success Dialog with regNumber
       setSuccessRegNumber(result.regNumber);
       setShowSuccess(true);
 
@@ -131,14 +138,14 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         onSuccess(result.regNumber);
       }
     } catch (error) {
-      alert("เกิดข้อผิดพลาดในการลงทะเบียน");
+      alert("An error occurred during registration");
       console.error(error);
     }
   };
 
   const isSubmitting = createGuest.isPending || uploadImage.isPending;
 
-  // ✅ Handle close success dialog
+  // Handle close success dialog
   const handleCloseSuccess = () => {
     setShowSuccess(false);
     setSuccessRegNumber("");
@@ -153,7 +160,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
               <img src="../../public/chorcher.png" alt="Chorcher Logo" className="h-20 w-20" />
             </div>
           </div>
-          <CardTitle className="text-3xl">Check-in Registration</CardTitle>
+          <CardTitle className="text-3xl">Lay Over Registration</CardTitle>
           <p className="text-amber-950 mt-2">Welcome to ChorCher Hotel</p>
         </CardHeader>
         {/* Decorative Outline */}
@@ -216,8 +223,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                       type="file"
                       id="imageUpload"
                       className="hidden"
-                      accept="image/jpeg,image/png,image/gif,image/webp"
-                      capture="environment"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/heic,image/heif,.heic,.heif"
                       onChange={handleImageUpload}
                     />
                     <label htmlFor="imageUpload" className="cursor-pointer">
@@ -227,10 +233,9 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                         </div>
                         <div>
                           <p className="text-sm">
-                            <span className="text-blue-600 font-medium">Click to upload</span> or
-                            drag and drop
+                            <span className="text-blue-600 font-medium">Click to upload or take photo</span>
                           </p>
-                          <p className="text-xs text-gray-500">PNG, JPG, GIF, WEBP up to 10MB</p>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF, WEBP, HEIC up to 10MB</p>
                         </div>
                       </div>
                     </label>
@@ -328,7 +333,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       </Card>
       <footer>
         <div className="text-center text-sm text-gray-500 mt-4">
-          &copy; {new Date().getFullYear()} Chorcher Hotel. All rights reserved.
+          &copy; {new Date().getFullYear()} Chorcher Hotel. Lay Over-All rights reserved.
         </div>
       </footer>
     </div>
