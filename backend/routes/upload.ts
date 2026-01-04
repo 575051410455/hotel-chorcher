@@ -35,11 +35,17 @@ const uploadRoute = new Hono()
         return c.json<ApiResponse>({ success: false, error: "No file uploaded" }, 400);
       }
 
-      // Validate file type
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-      if (!allowedTypes.includes(file.type)) {
+      // Validate file type - Support HEIC/HEIF from iPhone
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif"];
+      const fileExtension = file.name.toLowerCase().split('.').pop();
+      const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp", "heic", "heif"];
+
+      // Check both MIME type and file extension
+      const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension || "");
+
+      if (!isValidType) {
         return c.json<ApiResponse>(
-          { success: false, error: "Invalid file type. Only JPEG, PNG, GIF, WEBP allowed" },
+          { success: false, error: "Invalid file type. Only JPEG, PNG, GIF, WEBP, HEIC, HEIF allowed" },
           400
         );
       }
@@ -101,11 +107,11 @@ const uploadRoute = new Hono()
       const ext = matches[1];
       const base64Data = matches[2];
 
-      // Validate extension
-      const allowedExts = ["jpeg", "jpg", "png", "gif", "webp"];
+      // Validate extension - Support HEIC/HEIF from iPhone
+      const allowedExts = ["jpeg", "jpg", "png", "gif", "webp", "heic", "heif"];
       if (!ext || !allowedExts.includes(ext)) {
         return c.json<ApiResponse>(
-          { success: false, error: "Invalid image type. Only JPEG, PNG, GIF, WEBP allowed" },
+          { success: false, error: "Invalid image type. Only JPEG, PNG, GIF, WEBP, HEIC, HEIF allowed" },
           400
         );
       }
