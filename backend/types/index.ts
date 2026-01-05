@@ -113,6 +113,7 @@ export const guestSchema = z.object({
   guest2FirstName: z.string().nullable().optional(),
   guest2MiddleName: z.string().nullable().optional(),
   guest2LastName: z.string().nullable().optional(),
+  roomNumber: z.string().nullable().optional(),
   image: z.string().nullable().optional(),
   createdAt: z.string(),
   checkedIn: z.boolean().default(false),
@@ -132,6 +133,7 @@ export const createGuestSchema = z.object({
   guest2FirstName: z.string().nullable().optional(),
   guest2MiddleName: z.string().nullable().optional(),
   guest2LastName: z.string().nullable().optional(),
+  roomNumber: z.string().nullable().optional(),
   image: z.string().nullable().optional(),
 });
 
@@ -149,6 +151,7 @@ export const updateGuestSchema = z.object({
   guest2FirstName: z.string().nullable().optional(),
   guest2MiddleName: z.string().nullable().optional(),
   guest2LastName: z.string().nullable().optional(),
+  roomNumber: z.string().nullable().optional(),
   image: z.string().nullable().optional(),
   checkedIn: z.boolean().optional(),
 });

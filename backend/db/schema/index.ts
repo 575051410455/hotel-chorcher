@@ -58,6 +58,7 @@ export const guests = pgTable("guests", {
   guest2FirstName: text("guest2_first_name"),
   guest2MiddleName: text("guest2_middle_name"),
   guest2LastName: text("guest2_last_name"),
+  roomNumber: text("room_number"),
   image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   checkedIn: boolean("checked_in").default(false).notNull(),

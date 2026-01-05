@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query"; // เพิ่ม import
-import { 
-  Edit, Trash2, FileText, Eye, FileDown, 
-  CheckCircle2, Circle, Search, Plane, Loader2 
+import {
+  Edit, Trash2, FileText, Eye, FileDown,
+  CheckCircle2, Circle, Search, Plane, Loader2
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { toast } from "sonner";
 import type { Guest, GuestQuery, UpdateGuestInput } from "@backend/types";
 
 // UI Imports
@@ -24,7 +25,6 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { PreviewModal } from "@/components/PreviewModal";
 import { AppSidebar } from "@/components/app-sidebar"; // New Component
 import { AppHeader } from "@/components/app-header";   // New Component
-
 import { useGuests, useUpdateGuest, useDeleteGuest, userQueryOptions, api } from "@/lib/api";
 
 
@@ -45,14 +45,25 @@ export function AdminDashboard() {
 
   // State
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<GuestQuery["status"]>("all");
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
   const [deletingGuest, setDeletingGuest] = useState<Guest | null>(null);
   const [previewGuest, setPreviewGuest] = useState<Guest | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [editingRoomNumber, setEditingRoomNumber] = useState<{ [key: number]: string }>({});
+
+  // Debounce search term (รอ 500ms หลังจากพิมพ์เสร็จ)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Queries & Mutations
-  const { data: guestsData, isLoading } = useGuests({ search: searchTerm, status: filterStatus, limit: 100, page: 1 });
+  const { data: guestsData, isLoading } = useGuests({ search: debouncedSearchTerm, status: filterStatus, limit: 100, page: 1 });
   const updateGuest = useUpdateGuest();
   const deleteGuest = useDeleteGuest();
 
@@ -90,7 +101,7 @@ export function AdminDashboard() {
       setEditingGuest(null);
     } catch (error) {
       console.error("Failed to update guest:", error);
-      alert("Failed to update guest");
+      toast.error("Failed to update guest");
     }
   };
 
@@ -101,7 +112,7 @@ export function AdminDashboard() {
       setDeletingGuest(null);
     } catch (error) {
       console.error("Failed to delete guest:", error);
-      alert("Failed to delete guest");
+      toast.error("Failed to delete guest");
     }
   };
 
@@ -113,13 +124,34 @@ export function AdminDashboard() {
       });
     } catch (error) {
       console.error("Failed to update check-in status:", error);
-      alert("Failed to update check-in status");
+      toast.error("Failed to update check-in status");
+    }
+  };
+
+  const handleRoomNumberChange = (guestId: number, value: string) => {
+    setEditingRoomNumber(prev => ({ ...prev, [guestId]: value }));
+  };
+
+  const handleRoomNumberBlur = async (guest: Guest) => {
+    const newRoomNumber = editingRoomNumber[guest.id];
+    if (newRoomNumber === undefined) return;
+
+    if (newRoomNumber !== (guest.roomNumber || "")) {
+      try {
+        await updateGuest.mutateAsync({
+          id: guest.id,
+          data: { roomNumber: newRoomNumber || null }
+        });
+      } catch (error) {
+        console.error("Failed to update room number:", error);
+        toast.error("Failed to update room number");
+      }
     }
   };
 
   const handleExportExcel = () => {
     if (guests.length === 0) {
-      alert("No guests to export");
+      toast.error("No guests to export");
       return;
     }
     const excelData = guests.map((guest) => ({
@@ -127,6 +159,7 @@ export function AdminDashboard() {
       "First Name": guest.firstName,
       "Last Name": guest.lastName,
       "Flight Number": guest.flightNumber || "-",
+      "Room Number": guest.roomNumber || "-",
       "Checked In": guest.checkedIn ? "Yes" : "No",
       "Registration Date": new Date(guest.createdAt).toLocaleString(),
     }));
@@ -239,6 +272,7 @@ export function AdminDashboard() {
                           <TableHead>Guest 2 Name</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Check In/Out</TableHead>
+                          <TableHead>Room</TableHead>
                           <TableHead>Registered</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -257,6 +291,7 @@ export function AdminDashboard() {
                             <TableCell className="font-medium">{guest.firstName} {guest.lastName}</TableCell>
                             <TableCell>{guest.flightNumber || "-"}</TableCell>
                             <TableCell className="font-medium">{guest.guest2FirstName} {guest.guest2LastName}</TableCell>
+
                             <TableCell>
                               {guest.checkedIn ? (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">Checked In</span>
@@ -264,6 +299,7 @@ export function AdminDashboard() {
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Pending</span>
                               )}
                             </TableCell>
+                            
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <Switch
@@ -275,6 +311,17 @@ export function AdminDashboard() {
                                   {guest.checkedIn ? "Check Out" : "Check In"}
                                 </span>
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="text"
+                                placeholder="Room #"
+                                value={editingRoomNumber[guest.id] !== undefined ? editingRoomNumber[guest.id] : guest.roomNumber || ""}
+                                onChange={(e) => handleRoomNumberChange(guest.id, e.target.value)}
+                                onBlur={() => handleRoomNumberBlur(guest)}
+                                className="w-24 h-8 text-sm"
+                                disabled={updateGuest.isPending}
+                              />
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground">{new Date(guest.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell className="text-right">

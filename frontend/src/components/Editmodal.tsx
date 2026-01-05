@@ -33,25 +33,13 @@ export function EditModal({ guest, onClose, onSave, isSaving, userRole }: EditMo
   const [checkOutDate, setCheckOutDate] = useState(guest.checkOutDate || "");
   const [phoneNo, setPhoneNo] = useState(guest.phoneNo || "");
   const [flightNumber, setFlightNumber] = useState(guest.flightNumber || "");
+  const [roomNumber, setRoomNumber] = useState(guest.roomNumber || "");
   const [guest2FirstName, setGuest2FirstName] = useState(guest.guest2FirstName || "");
   const [guest2MiddleName, setGuest2MiddleName] = useState(guest.guest2MiddleName || "");
   const [guest2LastName, setGuest2LastName] = useState(guest.guest2LastName || "");
   const [checkedIn, setCheckedIn] = useState(guest.checkedIn || false);
 
-  const handleDownloadImage = () => {
-    if (!guest.image) {
-      alert("ไม่มีรูปภาพที่จะดาวน์โหลด");
-      return;
-    }
 
-    // Create a temporary link element to trigger download
-    const link = document.createElement('a');
-    link.href = guest.image;
-    link.download = `guest-${guest.regNumber}-photo.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   const handleSave = () => {
     // ตรวจสอบว่าผู้ใช้มี permission เป็น admin หรือไม่
@@ -76,6 +64,7 @@ export function EditModal({ guest, onClose, onSave, isSaving, userRole }: EditMo
       checkOutDate: checkOutDate || null,
       phoneNo: phoneNo || null,
       flightNumber: flightNumber || null,
+      roomNumber: roomNumber || null,
       guest2FirstName: guest2FirstName || null,
       guest2MiddleName: guest2MiddleName || null,
       guest2LastName: guest2LastName || null,
@@ -151,6 +140,7 @@ export function EditModal({ guest, onClose, onSave, isSaving, userRole }: EditMo
               <Label htmlFor="edit-flightNumber">Flight Number</Label>
               <Input id="edit-flightNumber" value={flightNumber} onChange={(e) => setFlightNumber(e.target.value)} placeholder="e.g., TG123, BA456" className="uppercase" />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="edit-nationality">Nationality</Label>
               <Input id="edit-nationality" value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="Enter nationality" />
