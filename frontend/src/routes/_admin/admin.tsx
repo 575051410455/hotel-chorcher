@@ -236,8 +236,7 @@ export function AdminDashboard() {
                           <TableHead className="w-[80px]">Img</TableHead>
                           <TableHead>Guest Name</TableHead>
                           <TableHead>Flight</TableHead>
-                          <TableHead>Guest 2 FirstName</TableHead>
-                          <TableHead>Guest 2 LastName</TableHead>
+                          <TableHead>Guest 2 Name</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Check In/Out</TableHead>
                           <TableHead>Registered</TableHead>
@@ -257,8 +256,7 @@ export function AdminDashboard() {
                             </TableCell>
                             <TableCell className="font-medium">{guest.firstName} {guest.lastName}</TableCell>
                             <TableCell>{guest.flightNumber || "-"}</TableCell>
-                            <TableCell>{guest.guest2FirstName || "-"}</TableCell>
-                            <TableCell>{guest.guest2LastName || "-"}</TableCell>
+                            <TableCell className="font-medium">{guest.guest2FirstName} {guest.guest2LastName}</TableCell>
                             <TableCell>
                               {guest.checkedIn ? (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">Checked In</span>
