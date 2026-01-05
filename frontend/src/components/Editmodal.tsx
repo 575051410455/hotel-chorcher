@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -38,7 +38,20 @@ export function EditModal({ guest, onClose, onSave, isSaving, userRole }: EditMo
   const [guest2LastName, setGuest2LastName] = useState(guest.guest2LastName || "");
   const [checkedIn, setCheckedIn] = useState(guest.checkedIn || false);
 
+  const handleDownloadImage = () => {
+    if (!guest.image) {
+      alert("ไม่มีรูปภาพที่จะดาวน์โหลด");
+      return;
+    }
 
+    // Create a temporary link element to trigger download
+    const link = document.createElement('a');
+    link.href = guest.image;
+    link.download = `guest-${guest.regNumber}-photo.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleSave = () => {
     // ตรวจสอบว่าผู้ใช้มี permission เป็น admin หรือไม่
