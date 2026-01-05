@@ -38,6 +38,8 @@ export function EditModal({ guest, onClose, onSave, isSaving, userRole }: EditMo
   const [guest2LastName, setGuest2LastName] = useState(guest.guest2LastName || "");
   const [checkedIn, setCheckedIn] = useState(guest.checkedIn || false);
 
+
+
   const handleSave = () => {
     // ตรวจสอบว่าผู้ใช้มี permission เป็น admin หรือไม่
     if (userRole !== "admin") {
@@ -74,8 +76,12 @@ export function EditModal({ guest, onClose, onSave, isSaving, userRole }: EditMo
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Edit Guest Information</DialogTitle>
-          <p className="text-sm text-gray-500">Registration No: #{guest.regNumber}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-2xl">Edit Guest Information</DialogTitle>
+              <p className="text-sm text-gray-500">Registration No: #{guest.regNumber}</p>
+            </div>
+          </div>
           {!isAdmin && (
             <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
               <p className="text-sm text-red-700 font-medium">

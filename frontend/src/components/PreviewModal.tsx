@@ -1,4 +1,4 @@
-import { Printer } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import type { Guest } from "@backend/types";
@@ -14,6 +14,22 @@ export function PreviewModal({ guest, isOpen, onClose }: PreviewModalProps) {
 
   const handlePrint = () => {
     window.print();
+  };
+
+
+  const handleDownloadImage = () => {
+    if (!guest.image) {
+      alert("ไม่มีรูปภาพที่จะดาวน์โหลด");
+      return;
+    }
+
+    // Create a temporary link element to trigger download
+    const link = document.createElement('a');
+    link.href = guest.image;
+    link.download = `guest-${guest.regNumber}-photo.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -41,11 +57,24 @@ export function PreviewModal({ guest, isOpen, onClose }: PreviewModalProps) {
           </div>
 
           {guest.image && (
-            <div className="flex justify-center">
+          <div className="relative">
+            <div className="flex justify-center ">
               <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
                 <img src={guest.image} alt="Guest ID" className="max-w-full h-auto max-h-64 object-cover" />
               </div>
             </div>
+            <div className="z-10 flex items-center justify-end p-2 print:hidden absolute top-0 right-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadImage}
+                className="flex items-center gap-2 "
+                title="Download guest image"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
           )}
 
           <div className="space-y-3">
