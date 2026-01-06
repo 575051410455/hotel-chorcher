@@ -26,6 +26,7 @@ function transformGuest(g: typeof guests.$inferSelect): Guest {
     checkOutDate: g.checkOutDate,
     phoneNo: g.phoneNo,
     flightNumber: g.flightNumber,
+    roomNumber: g.roomNumber,
     guest2FirstName: g.guest2FirstName,
     guest2MiddleName: g.guest2MiddleName,
     guest2LastName: g.guest2LastName,

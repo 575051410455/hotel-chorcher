@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
-import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import React, { useState, useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query"; // เพิ่ม import
 import {
-  Edit, Trash2, FileText, Eye, FileDown,
-  CheckCircle2, Circle, Search, Plane, Loader2
+  Edit, Trash2, FileText, Eye, FileDown,Search, Plane, Loader2
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
@@ -26,6 +25,7 @@ import { PreviewModal } from "@/components/PreviewModal";
 import { AppSidebar } from "@/components/app-sidebar"; // New Component
 import { AppHeader } from "@/components/app-header";   // New Component
 import { useGuests, useUpdateGuest, useDeleteGuest, userQueryOptions, api } from "@/lib/api";
+
 
 
 
@@ -68,6 +68,8 @@ export function AdminDashboard() {
   const deleteGuest = useDeleteGuest();
 
   const guests = guestsData?.data || [];
+
+  // console.log("Guests Data:", guests);  
 
   // Handlers
   const handleLogout = async () => {
@@ -128,26 +130,39 @@ export function AdminDashboard() {
     }
   };
 
-  const handleRoomNumberChange = (guestId: number, value: string) => {
-    setEditingRoomNumber(prev => ({ ...prev, [guestId]: value }));
-  };
+const handleRoomNumberChange = (guestId: number, value: string) => {
+  setEditingRoomNumber((prev) => ({ ...prev, [guestId]: value }));
+};
 
-  const handleRoomNumberBlur = async (guest: Guest) => {
-    const newRoomNumber = editingRoomNumber[guest.id];
-    if (newRoomNumber === undefined) return;
+const handleRoomNumberBlur =
+  (guest: Guest) => async (e: React.FocusEvent<HTMLInputElement>) => {
+    const next = e.currentTarget.value.trim();
+    const prevValue = (guest.roomNumber ?? "").trim();
 
-    if (newRoomNumber !== (guest.roomNumber || "")) {
-      try {
-        await updateGuest.mutateAsync({
-          id: guest.id,
-          data: { roomNumber: newRoomNumber || null }
-        });
-      } catch (error) {
-        console.error("Failed to update room number:", error);
-        toast.error("Failed to update room number");
-      }
+    if (next === prevValue) {
+      setEditingRoomNumber((prev) => {
+        const { [guest.id]: _, ...rest } = prev;
+        return rest;
+      });
+      return;
+    }
+
+    try {
+      await updateGuest.mutateAsync({
+        id: guest.id,
+        data: { roomNumber: next === "" ? null : next },
+      });
+
+      setEditingRoomNumber((prev) => {
+        const { [guest.id]: _, ...rest } = prev;
+        return rest;
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update room number");
     }
   };
+
 
   const handleExportExcel = () => {
     if (guests.length === 0) {
@@ -187,8 +202,6 @@ export function AdminDashboard() {
     email: "",
     role: "admin"
   };
-
-  console.log("Current User:", currentUser);
 
   return (
     <SidebarProvider>
@@ -314,13 +327,11 @@ export function AdminDashboard() {
                             </TableCell>
                             <TableCell>
                               <Input
-                                type="text"
-                                placeholder="Room #"
-                                value={editingRoomNumber[guest.id] !== undefined ? editingRoomNumber[guest.id] : guest.roomNumber || ""}
+                                value={editingRoomNumber[guest.id] ?? guest.roomNumber ?? ""}
                                 onChange={(e) => handleRoomNumberChange(guest.id, e.target.value)}
-                                onBlur={() => handleRoomNumberBlur(guest)}
-                                className="w-24 h-8 text-sm"
-                                disabled={updateGuest.isPending}
+                                onBlur={handleRoomNumberBlur(guest)}
+                                placeholder="Room No."
+                                className="w-24 text-sm"
                               />
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground">{new Date(guest.createdAt).toLocaleDateString()}</TableCell>

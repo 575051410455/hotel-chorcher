@@ -140,7 +140,10 @@ export function EditModal({ guest, onClose, onSave, isSaving, userRole }: EditMo
               <Label htmlFor="edit-flightNumber">Flight Number</Label>
               <Input id="edit-flightNumber" value={flightNumber} onChange={(e) => setFlightNumber(e.target.value)} placeholder="e.g., TG123, BA456" className="uppercase" />
             </div>
-            
+            <div className="space-y-2">
+              <Label htmlFor="edit-roomNumber">Room Number</Label>
+              <Input id="edit-roomNumber" value={roomNumber} onChange={(e) => setRoomNumber(e.target.value)} placeholder="Enter room number" />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="edit-nationality">Nationality</Label>
               <Input id="edit-nationality" value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="Enter nationality" />

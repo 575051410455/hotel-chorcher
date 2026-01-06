@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, X, Loader2 } from "lucide-react";
+import { AlertCircleIcon, Camera, X, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -7,6 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import type { CreateGuestInput } from "@backend/types";
 import { useCreateGuest, useUploadImage } from "@/lib/api";
 import { SuccessDialog } from "@/components/SuccessDialog";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 
 interface RegistrationFormProps {
   onSuccess?: (regNumber: string) => void;
@@ -266,9 +271,23 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
             {/* Guest No.2 Information */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg text-gray-700 border-b pb-2">
+              <h3 className="font-semibold text-lg text-gray-700 border-b pb-1">
                 Guest No.2 Information (Optional)
               </h3>
+              <Alert variant="destructive">
+                <AlertCircleIcon />
+                <h1 className="font-normal text-[16px]">กรณีต้องการพักแบบ 2 คน กรุณาระบุชื่อผู้เข้าพักคนที่ 2 ด้วย</h1>
+                <AlertDescription>
+                  <p className="font-normal text-[16px]">(จำเป็นต้องระบุทุกครั้ง แม้ผู้เข้าพักคนที่ 2 จะเคยลงทะเบียนไว้ก่อนแล้วก็ตาม)</p>
+                </AlertDescription>
+              </Alert>
+              <Alert variant="destructive">
+                <AlertCircleIcon />
+                <h1 className="font-normal text-[16px]">If you would like to stay as a couple (2 guests), please provide the name of the second guest.</h1>
+                <AlertDescription>
+                  <p className="font-normal text-[16px]">(This is required even if the second guest has already registered before.)</p>
+                </AlertDescription>
+              </Alert>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="guest2FirstName">First Name</Label>
