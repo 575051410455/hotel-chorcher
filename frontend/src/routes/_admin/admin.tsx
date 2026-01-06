@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query"; // เพิ่ม import
 import {
   Edit, Trash2, FileText, Eye, FileDown,Search, Plane, Loader2
@@ -25,8 +25,6 @@ import { PreviewModal } from "@/components/PreviewModal";
 import { AppSidebar } from "@/components/app-sidebar"; // New Component
 import { AppHeader } from "@/components/app-header";   // New Component
 import { useGuests, useUpdateGuest, useDeleteGuest, userQueryOptions, api } from "@/lib/api";
-
-
 
 
 export const Route = createFileRoute('/_admin/admin')({
@@ -301,7 +299,11 @@ const handleRoomNumberBlur =
                                 <div className="w-10 h-10 bg-slate-100 rounded flex items-center justify-center"><FileText className="w-4 h-4 text-slate-300" /></div>
                               )}
                             </TableCell>
-                            <TableCell className="font-medium">{guest.firstName} {guest.lastName}</TableCell>
+                            <TableCell className="font-medium">
+                              <button type="button" className="text-blue-600 hover:opacity-80"  onClick={() => handlePreview(guest)}>
+                                {guest.firstName} {guest.lastName}
+                              </button>
+                            </TableCell>
                             <TableCell>{guest.flightNumber || "-"}</TableCell>
                             <TableCell className="font-medium">{guest.guest2FirstName} {guest.guest2LastName}</TableCell>
 

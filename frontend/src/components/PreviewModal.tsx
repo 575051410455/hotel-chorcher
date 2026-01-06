@@ -1,185 +1,191 @@
-import { Download, Printer } from "lucide-react";
+import React, { useRef } from "react";
+import { Printer, X } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import type { Guest } from "@backend/types";
+import { Dialog, DialogContent } from "./ui/dialog";
 
-interface PreviewModalProps {
-  guest: Guest | null;
-  isOpen: boolean;
-  onClose: () => void;
+function Field({
+  label,
+  value,
+  mono,
+  className,
+}: {
+  label: string;
+  value?: string | null;
+  mono?: boolean;
+  className?: string;
+}) {
+  if (!value) return null;
+  return (
+    <div className={className}>
+      <div className="text-[11px] text-gray-500 print:text-xs">{label}</div>
+      <div className={`mt-0.5 text-sm ${mono ? "font-mono" : ""} print:text-sm font-medium`}>
+        {value}
+      </div>
+    </div>
+  );
 }
 
-export function PreviewModal({ guest, isOpen, onClose }: PreviewModalProps) {
-  if (!guest) return null;
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-
-  const handleDownloadImage = () => {
-    if (!guest.image) {
-      alert("ไม่มีรูปภาพที่จะดาวน์โหลด");
-      return;
-    }
-
-    // Create a temporary link element to trigger download
-    const link = document.createElement('a');
-    link.href = guest.image;
-    link.download = `guest-${guest.regNumber}-photo.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
+function GuestPrintSheet({ guest }: { guest: any }) {
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[80vh] sm:max-w-2xl print:shadow-none overflow-y-auto">
-        <DialogHeader className="print:hidden">
-          <DialogTitle className="flex items-center justify-between">
-            <span>Guest Information Preview</span>
-            <Button variant="outline" size="sm" onClick={handlePrint} className="ml-auto mr-2">
-              <Printer className="w-4 h-4 mr-2" />
-              Print
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
+    <div className="w-full font-sans text-black">
+      <div className="flex items-start justify-between border-b border-gray-300 pb-4 mb-6">
+        <div>
+          <div className="text-xl font-bold print:text-3xl">Chorcher Hotel</div>
+          <div className="text-xs text-gray-500 print:text-sm mt-1">
+            Guest Registration Information
+          </div>
+        </div>
 
-        <div className="print-content space-y-6 py-4">
-          <div className="hidden print:block text-center border-b-2 pb-4 mb-6">
-            <h1 className="text-2xl font-bold">Grand Hotel</h1>
-            <p className="text-sm text-gray-600">Guest Registration Information</p>
+        <div className="text-right text-xs text-gray-600 space-y-1 print:text-sm">
+          <div>
+            <span className="text-gray-500">Reg No.</span>{" "}
+            <span className="font-mono font-bold text-black text-base">
+              #{guest.regNumber}
+            </span>
+          </div>
+          <div>
+            <span className="text-gray-500">Date</span>{" "}
+            <span>{new Date(guest.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-6 print:gap-8">
+        <div className="col-span-12">
+          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white print:border-gray-300">
+            {guest.image ? (
+              <img
+                src={guest.image}
+                alt="Guest"
+                className="w-full h-auto object-contain max-h-[400px] print:max-h-[8cm] bg-gray-50"
+              />
+            ) : (
+              <div className="p-6 text-center text-sm text-gray-500 bg-gray-50 h-32 flex items-center justify-center">
+                No image provided
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="col-span-12">
+          <div className="text-sm font-bold mb-3 bg-gray-100 p-2 rounded print:bg-gray-100 print:text-base print:mb-4 border border-gray-200">
+            Primary Guest Information
           </div>
 
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border-2 border-blue-200">
-            <p className="text-sm text-gray-600">Registration Number</p>
-            <p className="text-2xl font-mono font-bold text-blue-600">#{guest.regNumber}</p>
-          </div>
-
-          {guest.image && (
-          <div className="relative">
-            <div className="flex justify-center ">
-              <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
-                <img src={guest.image} alt="Guest ID" className="max-w-full h-auto max-h-64 object-cover" />
-              </div>
-            </div>
-            <div className="z-10 flex items-center justify-end p-2 print:hidden absolute top-0 right-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadImage}
-                className="flex items-center gap-2 "
-                title="Download guest image"
-              >
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-          )}
-
-          <div className="space-y-3">
-            <h3 className="font-semibold text-lg border-b pb-2">Primary Guest</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">First Name</p>
-                <p className="font-medium">{guest.firstName}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Last Name</p>
-                <p className="font-medium">{guest.lastName}</p>
-              </div>
-              {guest.middleName && (
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-500">Middle Name</p>
-                  <p className="font-medium">{guest.middleName}</p>
-                </div>
-              )}
-              {guest.gender && (
-                <div>
-                  <p className="text-sm text-gray-500">Gender</p>
-                  <p className="font-medium">{guest.gender}</p>
-                </div>
-              )}
-              {guest.passportNo && (
-                <div>
-                  <p className="text-sm text-gray-500">Passport No.</p>
-                  <p className="font-medium font-mono">{guest.passportNo}</p>
-                </div>
-              )}
-              {guest.flightNumber && (
-                <div>
-                  <p className="text-sm text-gray-500">Flight Number</p>
-                  <p className="font-medium font-mono">{guest.flightNumber}</p>
-                </div>
-              )}
-              {guest.nationality && (
-                <div>
-                  <p className="text-sm text-gray-500">Nationality</p>
-                  <p className="font-medium">{guest.nationality}</p>
-                </div>
-              )}
-              {guest.birthDate && (
-                <div>
-                  <p className="text-sm text-gray-500">Birth Date</p>
-                  <p className="font-medium">{guest.birthDate}</p>
-                </div>
-              )}
-              {guest.checkOutDate && (
-                <div>
-                  <p className="text-sm text-gray-500">Check Out Date</p>
-                  <p className="font-medium">{guest.checkOutDate}</p>
-                </div>
-              )}
-              {guest.phoneNo && (
-                <div>
-                  <p className="text-sm text-gray-500">Phone No.</p>
-                  <p className="font-medium">{guest.phoneNo}</p>
-                </div>
-              )}
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-2 gap-x-8 gap-y-4 print:gap-y-6">
+            <Field label="First Name" value={guest.firstName} />
+            <Field label="Last Name" value={guest.lastName} />
+            <Field className="col-span-2" label="Middle Name" value={guest.middleName} />
+            <Field label="Gender" value={guest.gender} />
+            <Field label="Nationality" value={guest.nationality} />
+            <Field label="Passport No." value={guest.passportNo} mono />
+            <Field label="Flight Number" value={guest.flightNumber} mono />
+            <Field label="Birth Date" value={guest.birthDate} />
+            <Field label="Check Out Date" value={guest.checkOutDate} />
+            <Field label="Phone No." value={guest.phoneNo} />
           </div>
 
           {(guest.guest2FirstName || guest.guest2LastName) && (
-            <div className="space-y-3">
-              <h3 className="font-semibold text-lg border-b pb-2">Guest No.2</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">First Name</p>
-                  <p className="font-medium">{guest.guest2FirstName || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Last Name</p>
-                  <p className="font-medium">{guest.guest2LastName || "-"}</p>
-                </div>
+            <>
+              <div className="mt-8 text-sm font-bold mb-3 bg-gray-100 p-2 rounded print:bg-gray-100 print:text-base print:mb-4 border border-gray-200">
+                Guest No.2
               </div>
-            </div>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                <Field label="First Name" value={guest.guest2FirstName || "-"} />
+                <Field label="Last Name" value={guest.guest2LastName || "-"} />
+              </div>
+            </>
           )}
 
-          <div className="space-y-3 border-t pt-4">
-            <div>
-              <p className="text-sm text-gray-500">Registration Date & Time</p>
-              <p className="font-medium">{new Date(guest.createdAt).toLocaleString()}</p>
+          <div className="mt-12 border-t border-gray-300 pt-4 text-xs text-gray-400 flex justify-between">
+            <span>Generated by Hotel Management System</span>
+            <span>Printed at {new Date().toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PreviewModal({ guest, isOpen, onClose }: any) {
+  if (!guest) return null;
+
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Guest-${guest.regNumber ?? ""}`,
+  });
+
+  return (
+    <>
+      {/* Global print styles */}
+      <style>
+        {`
+          @media print {
+            body > *:not(#print-container) {
+              display: none !important;
+            }
+            #print-container {
+              display: block !important;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+            }
+            @page { 
+              size: A4; 
+              margin: 15mm; 
+            }
+            html, body {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          }
+          @media screen {
+            #print-container {
+              position: absolute;
+              left: -9999px;
+              top: -9999px;
+            }
+          }
+        `}
+      </style>
+
+      {/* Print container */}
+      <div
+        id="print-container"
+        ref={printRef}
+        className="bg-white"
+        style={{ width: "210mm", minHeight: "297mm" }}
+      >
+        <div className="p-8">
+          <GuestPrintSheet guest={guest} />
+        </div>
+      </div>
+
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-h-[90vh] sm:max-w-4xl w-full overflow-hidden flex flex-col p-0 gap-0">
+          <div className="shrink-0 h-14 border-b bg-white flex items-center justify-between px-4 z-10">
+            <div className="font-medium">Guest Information Preview</div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={() => handlePrint()}>
+                <Printer className="w-4 h-4 mr-2" /> Print A4
+              </Button>
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="w-5 h-5" />
+              </Button>
             </div>
           </div>
 
-          <div className="hidden print:block text-center text-sm text-gray-500 border-t pt-4 mt-8">
-            <p>Thank you for choosing Grand Hotel</p>
-            <p>© {new Date().getFullYear()} Grand Hotel. All rights reserved.</p>
+          <div className="overflow-y-auto flex-1 bg-slate-100 p-4 md:p-8">
+            <div className="mx-auto bg-white shadow-lg rounded-none md:rounded-xl p-8 md:p-12 max-w-[210mm] min-h-[297mm]">
+              <GuestPrintSheet guest={guest} />
+            </div>
           </div>
-        </div>
-
-        <div className="print:hidden flex justify-end">
-          <Button variant="outline" onClick={onClose}>Close</Button>
-        </div>
-      </DialogContent>
-
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          .print-content, .print-content * { visibility: visible; }
-          .print-content { position: absolute; left: 0; top: 0; width: 100%; }
-        }
-      `}</style>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
