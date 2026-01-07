@@ -171,15 +171,46 @@ const handleRoomNumberBlur =
       "Reg No.": guest.regNumber,
       "First Name": guest.firstName,
       "Last Name": guest.lastName,
+      "Middle Name": guest.middleName || "-",
+      "Passport No.": guest.passportNo || "-",
+      "Nationality": guest.nationality || "-",
+      "Date of Birth": guest.birthDate || "-",
+      "Check Out Date": guest.checkOutDate || "-",
+      "phone No.": guest.phoneNo || "-",
       "Flight Number": guest.flightNumber || "-",
+      "Gender": guest.gender || "-",
       "Room Number": guest.roomNumber || "-",
       "Checked In": guest.checkedIn ? "Yes" : "No",
+      "Guest 2 First Name": guest.guest2FirstName || "-",
+      "Guest 2 Last Name": guest.guest2LastName || "-",
+      "Guest 2 Middle Name": guest.guest2MiddleName || "-",
       "Registration Date": new Date(guest.createdAt).toLocaleString(),
     }));
     const ws = XLSX.utils.json_to_sheet(excelData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Guest Registrations");
-    XLSX.writeFile(wb, `Hotel_Guests_${new Date().toISOString().split("T")[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Lay Over Chorcher");
+    XLSX.writeFile(wb, `Reg_Chorcher_${new Date().toISOString().split("T")[0]}.xlsx`);
+  };
+
+  const handleImmigrationExcel = () => {
+    if (guests.length === 0) {
+      toast.error("No guests to export");
+      return;
+    }
+    const excelData = guests.map((guest) => ({
+      "First Name": guest.firstName,
+      "Middle Name": guest.middleName || "-",
+      "Last Name": guest.lastName,
+      "Passport No." : guest.passportNo || "-",
+      "Nationality": guest.nationality || "-",
+      "Date of Birth": guest.birthDate || "-",
+      "Gender": guest.gender || "-",
+      "Check Out Date": guest.checkOutDate || "-",
+    }));
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Lay Over Chorcher");
+    XLSX.writeFile(wb, `Immigration_Chorcher_${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
   if (isLoading) {
@@ -189,6 +220,10 @@ const handleRoomNumberBlur =
       </div>
     );
   }
+
+
+
+
 
   // 🔑 เตรียมข้อมูล User สำหรับ Sidebar
   const currentUser = user ? {
@@ -224,7 +259,9 @@ const handleRoomNumberBlur =
                 <div className="flex gap-2 flex-wrap">
                   {guests.length > 0 && (
                     <>
-                      <Button variant="outline" className="bg-purple-600 text-white hover:bg-purple-700 border-purple-600">
+                      <Button variant="outline"
+                      onClick={handleImmigrationExcel}
+                      className="bg-purple-600 text-white hover:bg-purple-700 border-purple-600">
                         <Plane className="w-4 h-4 mr-2" />
                         Immigration
                       </Button>
@@ -275,7 +312,7 @@ const handleRoomNumberBlur =
                   <div className="rounded-md border">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
+                        <TableRow className="bg-muted/50 hover:bg-muted/50">
                           <TableHead className="w-[80px]">No.</TableHead>
                           <TableHead className="w-[80px]">Img</TableHead>
                           <TableHead>Guest Name</TableHead>
