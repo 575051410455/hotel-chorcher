@@ -1,191 +1,358 @@
-import React, { useRef } from "react";
-import { Printer, X } from "lucide-react";
-import { useReactToPrint } from "react-to-print";
+// src/components/PreviewModal.tsx
+import React, { useState } from "react";
+import { Printer, X, Download, Loader2 } from "lucide-react";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  Image,
+  StyleSheet,
+  Font,
+  PDFViewer,
+  pdf,
+} from "@react-pdf/renderer";
+import { saveAs } from "file-saver";
+
 import { Button } from "./ui/button";
 import { Dialog, DialogContent } from "./ui/dialog";
 
-function Field({
+// Register Thai font (ต้อง download font ไว้ใน public/fonts/)
+Font.register({
+  family: "Sarabun",
+  fonts: [
+    { src: "/fonts/Sarabun-Regular.ttf", fontWeight: "normal" },
+    { src: "/fonts/Sarabun-Bold.ttf", fontWeight: "bold" },
+  ],
+});
+
+// Fallback to default font if Thai font not available
+Font.register({
+  family: "Roboto",
+  fonts: [
+    { src: "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5Q.ttf", fontWeight: "normal" },
+    { src: "https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlvAw.ttf", fontWeight: "bold" },
+  ],
+});
+
+// PDF Styles
+const styles = StyleSheet.create({
+  page: {
+    padding: 40,
+    fontFamily: "Roboto",
+    fontSize: 10,
+    backgroundColor: "#ffffff",
+  },
+  // Header
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    borderBottomWidth: 1,
+    borderBottomColor: "#d1d5db",
+    paddingBottom: 15,
+    marginBottom: 20,
+  },
+  hotelName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1f2937",
+  },
+  hotelSubtitle: {
+    fontSize: 9,
+    color: "#6b7280",
+    marginTop: 4,
+  },
+  headerRight: {
+    alignItems: "flex-end",
+  },
+  regLabel: {
+    fontSize: 9,
+    color: "#6b7280",
+  },
+  regNumber: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#1f2937",
+    marginTop: 2,
+  },
+  dateText: {
+    fontSize: 9,
+    color: "#6b7280",
+    marginTop: 4,
+  },
+  // Image section
+  imageContainer: {
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  guestImage: {
+    width: "100%",
+    maxHeight: 250,
+    objectFit: "contain",
+    backgroundColor: "#f9fafb",
+  },
+  noImage: {
+    height: 100,
+    backgroundColor: "#f9fafb",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noImageText: {
+    fontSize: 10,
+    color: "#9ca3af",
+  },
+  // Section
+  sectionHeader: {
+    backgroundColor: "#f3f4f6",
+    padding: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 4,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#374151",
+  },
+  // Fields grid
+  fieldsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 20,
+  },
+  fieldItem: {
+    width: "50%",
+    marginBottom: 12,
+    paddingRight: 10,
+  },
+  fieldItemFull: {
+    width: "100%",
+    marginBottom: 12,
+  },
+  fieldLabel: {
+    fontSize: 9,
+    color: "#6b7280",
+    marginBottom: 2,
+  },
+  fieldValue: {
+    fontSize: 11,
+    color: "#1f2937",
+    fontWeight: "bold",
+  },
+  fieldValueMono: {
+    fontSize: 11,
+    color: "#1f2937",
+    fontWeight: "bold",
+    fontFamily: "Courier",
+  },
+  // Footer
+  footer: {
+    position: "absolute",
+    bottom: 30,
+    left: 40,
+    right: 40,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: "#d1d5db",
+    paddingTop: 10,
+  },
+  footerText: {
+    fontSize: 8,
+    color: "#9ca3af",
+  },
+});
+
+// Field Component for PDF
+function PDFField({
   label,
   value,
-  mono,
-  className,
+  mono = false,
+  fullWidth = false,
 }: {
   label: string;
   value?: string | null;
   mono?: boolean;
-  className?: string;
+  fullWidth?: boolean;
 }) {
   if (!value) return null;
   return (
-    <div className={className}>
-      <div className="text-[11px] text-gray-500 print:text-xs">{label}</div>
-      <div className={`mt-0.5 text-sm ${mono ? "font-mono" : ""} print:text-sm font-medium`}>
-        {value}
-      </div>
-    </div>
+    <View style={fullWidth ? styles.fieldItemFull : styles.fieldItem}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={mono ? styles.fieldValueMono : styles.fieldValue}>{value}</Text>
+    </View>
   );
 }
 
-function GuestPrintSheet({ guest }: { guest: any }) {
+// PDF Document Component
+function GuestPDFDocument({ guest }: { guest: any }) {
+  const printDate = new Date().toLocaleString();
+  const regDate = guest.createdAt
+    ? new Date(guest.createdAt).toLocaleDateString()
+    : "-";
+
   return (
-    <div className="w-full font-sans text-black">
-      <div className="flex items-start justify-between border-b border-gray-300 pb-4 mb-6">
-        <div>
-          <div className="text-xl font-bold print:text-3xl">Chorcher Hotel</div>
-          <div className="text-xs text-gray-500 print:text-sm mt-1">
-            Guest Registration Information
-          </div>
-        </div>
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.hotelName}>Chorcher Hotel</Text>
+            <Text style={styles.hotelSubtitle}>Guest Registration Information</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.regLabel}>Reg No.</Text>
+            <Text style={styles.regNumber}>#{guest.regNumber || "-"}</Text>
+            <Text style={styles.dateText}>Date: {regDate}</Text>
+          </View>
+        </View>
 
-        <div className="text-right text-xs text-gray-600 space-y-1 print:text-sm">
-          <div>
-            <span className="text-gray-500">Reg No.</span>{" "}
-            <span className="font-mono font-bold text-black text-base">
-              #{guest.regNumber}
-            </span>
-          </div>
-          <div>
-            <span className="text-gray-500">Date</span>{" "}
-            <span>{new Date(guest.createdAt).toLocaleDateString()}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-12 gap-6 print:gap-8">
-        <div className="col-span-12">
-          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white print:border-gray-300">
-            {guest.image ? (
-              <img
-                src={guest.image}
-                alt="Guest"
-                className="w-full h-auto object-contain max-h-[400px] print:max-h-[8cm] bg-gray-50"
-              />
-            ) : (
-              <div className="p-6 text-center text-sm text-gray-500 bg-gray-50 h-32 flex items-center justify-center">
-                No image provided
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="col-span-12">
-          <div className="text-sm font-bold mb-3 bg-gray-100 p-2 rounded print:bg-gray-100 print:text-base print:mb-4 border border-gray-200">
-            Primary Guest Information
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-2 gap-x-8 gap-y-4 print:gap-y-6">
-            <Field label="First Name" value={guest.firstName} />
-            <Field label="Last Name" value={guest.lastName} />
-            <Field className="col-span-2" label="Middle Name" value={guest.middleName} />
-            <Field label="Gender" value={guest.gender} />
-            <Field label="Nationality" value={guest.nationality} />
-            <Field label="Passport No." value={guest.passportNo} mono />
-            <Field label="Flight Number" value={guest.flightNumber} mono />
-            <Field label="Birth Date" value={guest.birthDate} />
-            <Field label="Check Out Date" value={guest.checkOutDate} />
-            <Field label="Phone No." value={guest.phoneNo} />
-          </div>
-
-          {(guest.guest2FirstName || guest.guest2LastName) && (
-            <>
-              <div className="mt-8 text-sm font-bold mb-3 bg-gray-100 p-2 rounded print:bg-gray-100 print:text-base print:mb-4 border border-gray-200">
-                Guest No.2
-              </div>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                <Field label="First Name" value={guest.guest2FirstName || "-"} />
-                <Field label="Last Name" value={guest.guest2LastName || "-"} />
-              </div>
-            </>
+        {/* Guest Image */}
+        <View style={styles.imageContainer}>
+          {guest.image ? (
+            <Image src={guest.image} style={styles.guestImage} />
+          ) : (
+            <View style={styles.noImage}>
+              <Text style={styles.noImageText}>No image provided</Text>
+            </View>
           )}
+        </View>
 
-          <div className="mt-12 border-t border-gray-300 pt-4 text-xs text-gray-400 flex justify-between">
-            <span>Generated by Hotel Management System</span>
-            <span>Printed at {new Date().toLocaleString()}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* Primary Guest Information */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Primary Guest Information</Text>
+        </View>
+
+        <View style={styles.fieldsGrid}>
+          <PDFField label="First Name" value={guest.firstName} />
+          <PDFField label="Last Name" value={guest.lastName} />
+          <PDFField label="Middle Name" value={guest.middleName} fullWidth />
+          <PDFField label="Gender" value={guest.gender} />
+          <PDFField label="Nationality" value={guest.nationality} />
+          <PDFField label="Passport No." value={guest.passportNo} mono />
+          <PDFField label="Flight Number" value={guest.flightNumber} mono />
+          <PDFField label="Birth Date" value={guest.birthDate} />
+          <PDFField label="Check Out Date" value={guest.checkOutDate} />
+          <PDFField label="Phone No." value={guest.phoneNo} />
+        </View>
+
+        {/* Guest No.2 */}
+        {(guest.guest2FirstName || guest.guest2LastName) && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Guest No.2</Text>
+            </View>
+            <View style={styles.fieldsGrid}>
+              <PDFField label="First Name" value={guest.guest2FirstName || "-"} />
+              <PDFField label="Last Name" value={guest.guest2LastName || "-"} />
+            </View>
+          </>
+        )}
+
+        {/* Footer */}
+        <View style={styles.footer} fixed>
+          <Text style={styles.footerText}>Generated by Hotel Management System</Text>
+          <Text style={styles.footerText}>Printed at {printDate}</Text>
+        </View>
+      </Page>
+    </Document>
   );
 }
 
-export function PreviewModal({ guest, isOpen, onClose }: any) {
+// Main Preview Modal Component
+export function PreviewModal({
+  guest,
+  isOpen,
+  onClose,
+}: {
+  guest: any;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [isDownloading, setIsDownloading] = useState(false);
+
   if (!guest) return null;
 
-  const printRef = useRef<HTMLDivElement>(null);
+  // Download PDF
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const blob = await pdf(<GuestPDFDocument guest={guest} />).toBlob();
+      saveAs(blob, `Guest-${guest.regNumber || "unknown"}.pdf`);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Failed to download PDF");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: `Guest-${guest.regNumber ?? ""}`,
-  });
+  // Print PDF (open in new window)
+  const handlePrint = async () => {
+    try {
+      const blob = await pdf(<GuestPDFDocument guest={guest} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, "_blank");
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+    } catch (error) {
+      console.error("Print failed:", error);
+      alert("Failed to print PDF");
+    }
+  };
 
   return (
-    <>
-      {/* Global print styles */}
-      <style>
-        {`
-          @media print {
-            body > *:not(#print-container) {
-              display: none !important;
-            }
-            #print-container {
-              display: block !important;
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
-            }
-            @page { 
-              size: A4; 
-              margin: 15mm; 
-            }
-            html, body {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-          }
-          @media screen {
-            #print-container {
-              position: absolute;
-              left: -9999px;
-              top: -9999px;
-            }
-          }
-        `}
-      </style>
-
-      {/* Print container */}
-      <div
-        id="print-container"
-        ref={printRef}
-        className="bg-white"
-        style={{ width: "210mm", minHeight: "297mm" }}
-      >
-        <div className="p-8">
-          <GuestPrintSheet guest={guest} />
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-h-[95vh] h-[90vh] sm:max-w-5xl w-full overflow-hidden flex flex-col p-0 gap-0 ">
+        {/* Toolbar */}
+        <div className="shrink-0 h-14 border-b bg-white flex items-center justify-between px-4 z-10">
+          <div className="font-medium">
+            Guest Information - #{guest.regNumber || "-"}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              Download
+            </Button>
+            <Button size="sm" onClick={handlePrint}>
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-h-[90vh] sm:max-w-4xl w-full overflow-hidden flex flex-col p-0 gap-0">
-          <div className="shrink-0 h-14 border-b bg-white flex items-center justify-between px-4 z-10">
-            <div className="font-medium">Guest Information Preview</div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => handlePrint()}>
-                <Printer className="w-4 h-4 mr-2" /> Print A4
-              </Button>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="overflow-y-auto flex-1 bg-slate-100 p-4 md:p-8">
-            <div className="mx-auto bg-white shadow-lg rounded-none md:rounded-xl p-8 md:p-12 max-w-[210mm] min-h-[297mm]">
-              <GuestPrintSheet guest={guest} />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        {/* PDF Viewer */}
+        <div className="flex-1 bg-gray-600 overflow-hidden">
+          <PDFViewer
+            width="100%"
+            height="100%"
+            showToolbar={false}
+            style={{ border: "none" }}
+          >
+            <GuestPDFDocument guest={guest} />
+          </PDFViewer>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
