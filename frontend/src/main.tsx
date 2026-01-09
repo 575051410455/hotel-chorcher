@@ -1,6 +1,3 @@
-import { Buffer } from "buffer";
-import process from "process";
-
 import React from "react";
 
 import ReactDOM from "react-dom/client";
@@ -8,12 +5,6 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { routeTree } from "./routeTree.gen";
 import "./styles.css";
-
-
-
-
-(globalThis as any).Buffer = Buffer;
-(globalThis as any).process = process;
 
 // Create a query client
 const queryClient = new QueryClient({
