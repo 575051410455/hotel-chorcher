@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   guestImage: {
     width: "100%",
     maxHeight: 250,
-    objectFit: "contain",
+    objectFit: "conver",
   },
   noImage: {
     height: 100,

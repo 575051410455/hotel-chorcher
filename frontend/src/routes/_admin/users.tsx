@@ -387,16 +387,16 @@ function DraggableRow({
 function UsersPage() {
   // Get current user from route context
   const routeContext = Route.useRouteContext();
-  console.log("[UsersPage] Route context:", routeContext);
+  // console.log("[UsersPage] Route context:", routeContext);
 
   const { data: userData } = useQuery(userQueryOptions);
   const user = userData?.data;
 
   const currentUser = routeContext?.user;
-  console.log("[UsersPage] Current user:", currentUser);
+  // console.log("[UsersPage] Current user:", currentUser);
 
   const isAdmin = currentUser?.role === "admin";
-  console.log("[UsersPage] Is admin:", isAdmin);
+  // console.log("[UsersPage] Is admin:", isAdmin);
 
   // Logout handler
   const handleLogout = () => {
