@@ -71,7 +71,7 @@ export const api = client.api;
 
 async function getCurrentUser() {
   const res = await api.auth.me.$get();
-  console.log("[getCurrentUser] Response status:", res.status);
+  // console.log("[getCurrentUser] Response status:", res.status);
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));

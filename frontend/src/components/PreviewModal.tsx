@@ -1,32 +1,28 @@
 // src/components/PreviewModal.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Printer, X, Download, Loader2 } from "lucide-react";
 import {
   Document,
+  Font,
+  Image,
   Page,
+  PDFViewer,
+  StyleSheet,
   Text,
   View,
-  Image,
-  StyleSheet,
-  Font,
-  PDFViewer,
   pdf,
 } from "@react-pdf/renderer";
-import { saveAs } from "file-saver";
 
 import { Button } from "./ui/button";
-import { Dialog, DialogContent } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-// Register Thai font (ต้อง download font ไว้ใน public/fonts/)
-Font.register({
-  family: "Sarabun",
-  fonts: [
-    { src: "/fonts/Sarabun-Regular.ttf", fontWeight: "normal" },
-    { src: "/fonts/Sarabun-Bold.ttf", fontWeight: "bold" },
-  ],
-});
-
-// Fallback to default font if Thai font not available
+// Register font
 Font.register({
   family: "Roboto",
   fonts: [
@@ -34,6 +30,34 @@ Font.register({
     { src: "https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlvAw.ttf", fontWeight: "bold" },
   ],
 });
+
+// ✅ แปลง Image URL เป็น Base64
+async function getImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error("Failed to convert image:", error);
+    return null;
+  }
+}
+
+// ✅ ตรวจสอบว่าเป็น valid image format
+function isValidImageFormat(url: string): boolean {
+  const validExtensions = [".jpg", ".jpeg", ".png"];
+  const lowerUrl = url.toLowerCase();
+  return validExtensions.some(ext => lowerUrl.includes(ext));
+}
 
 // PDF Styles
 const styles = StyleSheet.create({
@@ -43,7 +67,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     backgroundColor: "#ffffff",
   },
-  // Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -81,19 +104,18 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginTop: 4,
   },
-  // Image section
   imageContainer: {
     marginBottom: 20,
     borderWidth: 1,
     borderColor: "#e5e7eb",
     borderRadius: 4,
     overflow: "hidden",
+    backgroundColor: "#f9fafb",
   },
   guestImage: {
     width: "100%",
     maxHeight: 250,
     objectFit: "contain",
-    backgroundColor: "#f9fafb",
   },
   noImage: {
     height: 100,
@@ -105,7 +127,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#9ca3af",
   },
-  // Section
   sectionHeader: {
     backgroundColor: "#f3f4f6",
     padding: 8,
@@ -119,7 +140,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#374151",
   },
-  // Fields grid
   fieldsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -129,10 +149,6 @@ const styles = StyleSheet.create({
     width: "50%",
     marginBottom: 12,
     paddingRight: 10,
-  },
-  fieldItemFull: {
-    width: "100%",
-    marginBottom: 12,
   },
   fieldLabel: {
     fontSize: 9,
@@ -150,7 +166,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontFamily: "Courier",
   },
-  // Footer
   footer: {
     position: "absolute",
     bottom: 30,
@@ -168,29 +183,27 @@ const styles = StyleSheet.create({
   },
 });
 
-// Field Component for PDF
+// PDF Field Component
 function PDFField({
   label,
   value,
   mono = false,
-  fullWidth = false,
 }: {
   label: string;
   value?: string | null;
   mono?: boolean;
-  fullWidth?: boolean;
 }) {
   if (!value) return null;
   return (
-    <View style={fullWidth ? styles.fieldItemFull : styles.fieldItem}>
+    <View style={styles.fieldItem}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <Text style={mono ? styles.fieldValueMono : styles.fieldValue}>{value}</Text>
     </View>
   );
 }
 
-// PDF Document Component
-function GuestPDFDocument({ guest }: { guest: any }) {
+// ✅ PDF Document Component - รับ base64 image
+function GuestPDFDocument({ guest, imageBase64 }: { guest: any; imageBase64: string | null }) {
   const printDate = new Date().toLocaleString();
   const regDate = guest.createdAt
     ? new Date(guest.createdAt).toLocaleDateString()
@@ -214,8 +227,8 @@ function GuestPDFDocument({ guest }: { guest: any }) {
 
         {/* Guest Image */}
         <View style={styles.imageContainer}>
-          {guest.image ? (
-            <Image src={guest.image} style={styles.guestImage} />
+          {imageBase64 ? (
+            <Image src={imageBase64} style={styles.guestImage} />
           ) : (
             <View style={styles.noImage}>
               <Text style={styles.noImageText}>No image provided</Text>
@@ -231,7 +244,7 @@ function GuestPDFDocument({ guest }: { guest: any }) {
         <View style={styles.fieldsGrid}>
           <PDFField label="First Name" value={guest.firstName} />
           <PDFField label="Last Name" value={guest.lastName} />
-          <PDFField label="Middle Name" value={guest.middleName} fullWidth />
+          <PDFField label="Middle Name" value={guest.middleName} />
           <PDFField label="Gender" value={guest.gender} />
           <PDFField label="Nationality" value={guest.nationality} />
           <PDFField label="Passport No." value={guest.passportNo} mono />
@@ -264,7 +277,7 @@ function GuestPDFDocument({ guest }: { guest: any }) {
   );
 }
 
-// Main Preview Modal Component
+// ✅ Main Preview Modal Component
 export function PreviewModal({
   guest,
   isOpen,
@@ -275,6 +288,24 @@ export function PreviewModal({
   onClose: () => void;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
+
+  // ✅ Convert image to base64 when modal opens
+  useEffect(() => {
+    if (isOpen && guest?.image) {
+      setIsLoadingImage(true);
+      getImageAsBase64(guest.image)
+        .then((base64) => {
+          setImageBase64(base64);
+        })
+        .finally(() => {
+          setIsLoadingImage(false);
+        });
+    } else {
+      setImageBase64(null);
+    }
+  }, [isOpen, guest?.image]);
 
   if (!guest) return null;
 
@@ -282,8 +313,19 @@ export function PreviewModal({
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const blob = await pdf(<GuestPDFDocument guest={guest} />).toBlob();
-      saveAs(blob, `Guest-${guest.regNumber || "unknown"}.pdf`);
+      const blob = await pdf(
+        <GuestPDFDocument guest={guest} imageBase64={imageBase64} />
+      ).toBlob();
+
+      // Native download (ไม่ต้องใช้ file-saver)
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Guest-${guest.regNumber || "unknown"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed:", error);
       alert("Failed to download PDF");
@@ -292,10 +334,12 @@ export function PreviewModal({
     }
   };
 
-  // Print PDF (open in new window)
+  // Print PDF
   const handlePrint = async () => {
     try {
-      const blob = await pdf(<GuestPDFDocument guest={guest} />).toBlob();
+      const blob = await pdf(
+        <GuestPDFDocument guest={guest} imageBase64={imageBase64} />
+      ).toBlob();
       const url = URL.createObjectURL(blob);
       const printWindow = window.open(url, "_blank");
       if (printWindow) {
@@ -311,10 +355,17 @@ export function PreviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[95vh] h-[90vh] sm:max-w-5xl w-full overflow-hidden flex flex-col p-0 gap-0 ">
+      <DialogContent className="h-[80vh] sm:h-[80vh] md:h-[90vh] sm:max-w-5xl w-full overflow-hidden flex flex-col p-0 gap-0">
         {/* Toolbar */}
-        <div className="shrink-0 h-14 border-b bg-white flex items-center justify-between px-4 z-10">
-          <div className="font-medium">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Guest Information Preview</DialogTitle>
+          <DialogDescription>
+            Preview guest registration information. Use Print to print the page, or close the dialog.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="shrink-0border-b bg-white flex items-center justify-between px-4 z-10">
+          <div className="font-medium text-sm sm:text-xl py-3">
             Guest Information - #{guest.regNumber || "-"}
           </div>
           <div className="flex items-center gap-2">
@@ -322,7 +373,7 @@ export function PreviewModal({
               variant="outline"
               size="sm"
               onClick={handleDownload}
-              disabled={isDownloading}
+              disabled={isDownloading || isLoadingImage}
             >
               {isDownloading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -331,7 +382,11 @@ export function PreviewModal({
               )}
               Download
             </Button>
-            <Button size="sm" onClick={handlePrint}>
+            <Button 
+              size="sm" 
+              onClick={handlePrint}
+              disabled={isLoadingImage}
+            >
               <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
@@ -343,14 +398,21 @@ export function PreviewModal({
 
         {/* PDF Viewer */}
         <div className="flex-1 bg-gray-600 overflow-hidden">
-          <PDFViewer
-            width="100%"
-            height="100%"
-            showToolbar={false}
-            style={{ border: "none" }}
-          >
-            <GuestPDFDocument guest={guest} />
-          </PDFViewer>
+          {isLoadingImage ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-8 h-8 animate-spin text-white" />
+              <span className="ml-2 text-white">Loading image...</span>
+            </div>
+          ) : (
+            <PDFViewer
+              width="100%"
+              height="100%"
+              showToolbar={false}
+              style={{ border: "none" }}
+            >
+              <GuestPDFDocument guest={guest} imageBase64={imageBase64} />
+            </PDFViewer>
+          )}
         </div>
       </DialogContent>
     </Dialog>

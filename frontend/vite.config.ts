@@ -1,10 +1,11 @@
+import path from 'path';  
 import { defineConfig } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
-import { fileURLToPath, URL } from 'node:url'
+import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,10 +18,22 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
   ],
+  optimizeDeps:{
+    esbuildOptions: {
+      plugins: [
+        NodeGlobalsPolyfillPlugin({
+          buffer: true,
+        }),
+      ]
+    }
+  },
+  define: {
+      global: 'window',
+  },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@backend': fileURLToPath(new URL('../backend', import.meta.url)),
+      "@": path.resolve(__dirname, "./src"),
+      "@backend": path.resolve(__dirname, "../backend"),
     },
   },
   server: {
